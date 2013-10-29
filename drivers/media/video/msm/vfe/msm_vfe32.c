@@ -4260,9 +4260,12 @@ static void vfe32_process_overflow_error(
 			
 			overflow_cnt = 0;
 		}
-	}	
-	pr_err("vfe32: process overflow err %d output mode 0x%x\n",
-		overflow_cnt,share_ctrl->comp_output_mode);
+	}
+/* OPPO 2013-08-06 huanggd Modify for reduce printk rate*/		
+	if (printk_ratelimit())	
+		pr_err("vfe32: process overflow err %d output mode 0x%x\n",
+			overflow_cnt,share_ctrl->comp_output_mode);
+/* OPPO 2013-08-06 huanggd Modify end*/	
 }
 
 static void vfe32_process_camif_sof_irq(
@@ -4419,30 +4422,31 @@ static void vfe32_process_common_error_irq(
 		VFE32_IMASK_IMG_MAST_6_BUS_OVFL)) {
 		vfe32_process_overflow_error(axi_ctrl->share_ctrl, errStatus);
 	}
-
-	if (errStatus & VFE32_IMASK_IMG_MAST_0_BUS_OVFL)
+/* OPPO 2013-08-06 huanggd Modify for reduce printk rate*/	
+	if ((errStatus & VFE32_IMASK_IMG_MAST_0_BUS_OVFL) && printk_ratelimit())
 		pr_err("vfe32_irq: image master 0 bus overflow\n");
 
-	if (errStatus & VFE32_IMASK_IMG_MAST_1_BUS_OVFL)
+	if ((errStatus & VFE32_IMASK_IMG_MAST_1_BUS_OVFL) && printk_ratelimit())
 		pr_err("vfe32_irq: image master 1 bus overflow\n");
 
-	if (errStatus & VFE32_IMASK_IMG_MAST_2_BUS_OVFL)
+	if ((errStatus & VFE32_IMASK_IMG_MAST_2_BUS_OVFL) && printk_ratelimit())
 		pr_err("vfe32_irq: image master 2 bus overflow\n");
 
-	if (errStatus & VFE32_IMASK_IMG_MAST_3_BUS_OVFL)
+	if ((errStatus & VFE32_IMASK_IMG_MAST_3_BUS_OVFL) && printk_ratelimit())
 		pr_err("vfe32_irq: image master 3 bus overflow\n");
 
-	if (errStatus & VFE32_IMASK_IMG_MAST_4_BUS_OVFL)
+	if ((errStatus & VFE32_IMASK_IMG_MAST_4_BUS_OVFL) && printk_ratelimit())
 		pr_err("vfe32_irq: image master 4 bus overflow\n");
 
-	if (errStatus & VFE32_IMASK_IMG_MAST_5_BUS_OVFL)
+	if ((errStatus & VFE32_IMASK_IMG_MAST_5_BUS_OVFL) && printk_ratelimit())
 		pr_err("vfe32_irq: image master 5 bus overflow\n");
 
-	if (errStatus & VFE32_IMASK_IMG_MAST_6_BUS_OVFL)
+	if ((errStatus & VFE32_IMASK_IMG_MAST_6_BUS_OVFL) && printk_ratelimit())
 		pr_err("vfe32_irq: image master 6 bus overflow\n");
 
-	if (errStatus & VFE32_IMASK_AXI_ERROR)
+	if ((errStatus & VFE32_IMASK_AXI_ERROR) && printk_ratelimit())
 		pr_err("vfe32_irq: axi error\n");
+/* OPPO 2013-08-06 huanggd Modify end*/
 }
 
 
@@ -5566,7 +5570,10 @@ static void axi32_do_tasklet(unsigned long data)
 		if (atomic_read(&axi_ctrl->share_ctrl->handle_common_irq)) {
 			if (qcmd->vfeInterruptStatus1 &
 					VFE32_IMASK_COMMON_ERROR_ONLY_1) {
-				pr_err("irq	errorIrq\n");
+/* OPPO 2013-08-06 huanggd Modify for reduce printk rate*/		
+				if (printk_ratelimit())		
+					pr_err("irq	errorIrq\n");
+/* OPPO 2013-08-06 huanggd Modify end*/						
 				vfe32_process_common_error_irq(
 					axi_ctrl,
 					qcmd->vfeInterruptStatus1 &
@@ -5581,7 +5588,10 @@ static void axi32_do_tasklet(unsigned long data)
 		if (atomic_read(&axi_ctrl->share_ctrl->vstate)) {
 			if (qcmd->vfeInterruptStatus1 &
 					VFE32_IMASK_VFE_ERROR_ONLY_1) {
-				pr_err("irq	errorIrq\n");
+/* OPPO 2013-08-06 huanggd Modify for reduce printk rate*/		
+				if (printk_ratelimit())		
+					pr_err("irq	errorIrq\n");
+/* OPPO 2013-08-06 huanggd Modify end*/	
 				vfe32_process_error_irq(
 					axi_ctrl,
 					qcmd->vfeInterruptStatus1 &

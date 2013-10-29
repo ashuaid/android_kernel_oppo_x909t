@@ -8271,7 +8271,9 @@ static void tabla_hs_gpio_handler(struct snd_soc_codec *codec,bool irq_detect)
 	#ifdef CONFIG_VENDOR_EDIT
 	if(tabla->hs_on == insert)
 	{
-		printk(KERN_INFO"headset detect handle don't response:%d\n",tabla->hs_on);
+/* OPPO 2013-08-09 huanggd Modify begin for less print in system sleep/wakeup, may reduce system power*/	
+		//printk(KERN_INFO"headset detect handle don't response:%d\n",tabla->hs_on);
+/* OPPO 2013-08-09 huanggd Modify end*/		
 		if((tabla->hs_on == 0)/* && l15_users*/)
 		{
 			/*OPPO 2012-12-28 zhzhyon Add for reason*/

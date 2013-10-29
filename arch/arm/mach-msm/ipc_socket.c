@@ -191,7 +191,10 @@ static int msm_ipc_router_create(struct net *net,
 	void *pil;
 
 	if (!check_permissions()) {
-		pr_err("%s: Do not have permissions\n", __func__);
+/* OPPO 2013-08-06 huanggd Modify for reduce printk rate*/		
+		if (printk_ratelimit())		
+			pr_err("%s: Do not have permissions\n", __func__);
+/* OPPO 2013-08-06 huanggd Modify end*/			
 		return -EPERM;
 	}
 

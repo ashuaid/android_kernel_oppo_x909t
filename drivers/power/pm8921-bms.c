@@ -405,7 +405,6 @@ static int usb_chg_plugged_in(struct pm8921_bms_chip *chip)
 			if((reg1&0x60)==0x20) //bit6:5 CHG_PATH
 				val = 1;
 			
-			pr_info("%s 111usb_chg = %d\n",__func__,val);
 			return val;
 		}
 	
@@ -413,7 +412,7 @@ static int usb_chg_plugged_in(struct pm8921_bms_chip *chip)
 	{
 	   return val &= pm8921_is_batfet_closed();
 	}
-	pr_info("%s 222 usb_chg = %d\n",__func__,val);
+	
 	/* if the charger driver was not initialized, use the restart reason */
 	if (ret == -EINVAL) {
 		if (pm8xxx_restart_reason(chip->dev->parent)
@@ -2470,6 +2469,39 @@ static void calib_hkadc_check(struct pm8921_bms_chip *chip, int batt_temp)
 	}
 }
 
+//OPPO zhanglong 2013-04-27 add begin for average current 
+static int current_cc_uah;
+
+static ssize_t pm_average_current_show(struct device *dev,
+        struct device_attribute *attr, char *buf) {
+
+    static int coulomb0, coulomb1;
+    static unsigned long seconds0, seconds1;
+    int average_current, seconds;
+    
+    coulomb1 = current_cc_uah;
+    seconds1 = get_seconds();
+    seconds = (int)(seconds1 - seconds0);
+    
+    if(coulomb0 != 0) {
+        average_current = 
+            (coulomb1 - coulomb0) * SECONDS_PER_HOUR / (int)(seconds1 - seconds0);
+    } else {
+        average_current = 0;
+    }
+    printk("[AVERAGE CURRENT] %s: coulomb: %d -- %d, sec: %ld -- %ld\n", __func__,
+        coulomb0, coulomb1, seconds0, seconds1);
+    coulomb0 = coulomb1;
+    seconds0 = seconds1;
+
+    return sprintf(buf, "current: %d uA\ntime: %d s\n", 
+                   average_current, seconds);
+}
+// /sys/bus/platform/devices/pm8921-bms/pm_average_current
+static DEVICE_ATTR(pm_average_current, 0644,
+                    pm_average_current_show, NULL);
+//OPPO zhanglong 2013-04-27 add begin for average current end
+
 /*
  * Remaining Usable Charge = remaining_charge (charge at ocv instance)
  *				- coloumb counter charge
@@ -2509,6 +2541,10 @@ static int calculate_state_of_charge(struct pm8921_bms_chip *chip,
 						&cc_uah,
 						&rbatt,
 						&iavg_ua);
+
+//OPPO zhanglong 2013-04-27 add begin for average current 
+    current_cc_uah = cc_uah;
+//OPPO zhanglong 2013-04-27 add begin for average current end
 
 	/* calculate remaining usable charge */
 	remaining_usable_charge_uah = remaining_charge_uah
@@ -2672,9 +2708,12 @@ static int calculate_state_of_charge(struct pm8921_bms_chip *chip,
 
 	if(shutdown_soc_invalid)
 		calculated_soc = new_calculated_soc;
-	
+
+	/* OPPO 2013-09-06 zhangzhilong delete begin for delete too much log info*/
+	/*if(debug_feature)
 	pr_info("shutdown_soc = %d new_calculated_soc = %d,firsttime = %d\n",
-						shutdown_soc, new_calculated_soc,firsttime);
+						shutdown_soc, new_calculated_soc,firsttime);*/
+	/* OPPO 2013-09-06 zhangzhilong delete end */
 	
 	firsttime = 0;
 	get_current_time(&chip->last_recalc_time);
@@ -3788,6 +3827,14 @@ static int __devinit pm8921_bms_probe(struct platform_device *pdev)
 	the_chip = chip;
 	create_debugfs_entries(chip);
 
+//OPPO zhanglong 2013-04-27 add begin for average current
+    rc = device_create_file(chip->dev, &dev_attr_pm_average_current);
+    if(rc) {
+        pr_err("couldn't create file pm_average_current, rc=%d\n", rc);
+        device_remove_file(chip->dev, &dev_attr_pm_average_current);
+    }
+//OPPO zhanglong 2013-04-27 add begin for average current end
+
 	rc = read_ocv_trim(chip);
 	if (rc) {
 		pr_err("couldn't adjust ocv_trim rc= %d\n", rc);
@@ -3836,6 +3883,10 @@ free_chip:
 static int __devexit pm8921_bms_remove(struct platform_device *pdev)
 {
 	struct pm8921_bms_chip *chip = platform_get_drvdata(pdev);
+
+//OPPO zhanglong 2013-04-27 add begin for average current
+    device_remove_file(chip->dev, &dev_attr_pm_average_current);
+//OPPO zhanglong 2013-04-27 add begin for average current end
 
 	free_irqs(chip);
 	kfree(chip->adjusted_fcc_temp_lut);

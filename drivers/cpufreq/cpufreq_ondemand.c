@@ -571,6 +571,10 @@ static ssize_t store_powersave_bias(struct kobject *a, struct attribute *b,
 				POWERSAVE_BIAS_MINLEVEL));
 
 	dbs_tuners_ins.powersave_bias = input;
+/* OPPO 2013-08-07 zhenwx Add begin for sometimes crash CRs-Fixed: 494407*/
+	mutex_lock(&dbs_mutex);
+	get_online_cpus();	
+/* OPPO 2013-08-07 zhenwx Add end */
 	if (!bypass) {
 		if (reenable_timer) {
 			/* reinstate dbs timer */
@@ -637,7 +641,11 @@ skip_this_cpu_bypass:
 			unlock_policy_rwsem_write(cpu);
 		}
 	}
-
+	
+/* OPPO 2013-08-07 zhenwx Add begin for sometimes crash CRs-Fixed: 494407 */
+	put_online_cpus();
+	mutex_unlock(&dbs_mutex); 
+/* OPPO 2013-08-07 zhenwx Add end */
 	return count;
 }
 

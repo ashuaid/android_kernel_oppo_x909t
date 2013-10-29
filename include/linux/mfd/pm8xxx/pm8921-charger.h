@@ -271,6 +271,9 @@ struct pm8921_charger_platform_data {
 	int nonstanard_mhl_chg_current;
 	/* OPPO 2012-08-13 chendx Add end */
 	bool				disable_chg_rmvl_wrkarnd;
+/* OPPO 2013-08-07 zhenwx Add begin for sometimes power key or insert USB no response */	
+	bool		enable_tcxo_warmup_delay;
+/* OPPO 2013-08-07 zhenwx Add end */	
 };
 
 enum pm8921_charger_source {

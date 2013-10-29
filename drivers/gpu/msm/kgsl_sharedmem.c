@@ -577,7 +577,11 @@ _kgsl_sharedmem_page_alloc(struct kgsl_memdesc *memdesc,
 		KGSL_CORE_ERR("vmalloc(%d) failed\n",
 			sglen_alloc * sizeof(struct scatterlist));
 		ret = -ENOMEM;
-		goto done;
+/* OPPO 2013-05-08 huanggd Modify begin for NULL pointer*/
+		//goto done;
+		memset(memdesc, 0, sizeof(*memdesc));
+		return ret;
+/* OPPO 2013-05-08 huanggd Modify end*/		
 	}
 
 	/*
@@ -593,7 +597,12 @@ _kgsl_sharedmem_page_alloc(struct kgsl_memdesc *memdesc,
 		KGSL_CORE_ERR("kmalloc (%d) failed\n",
 			sglen_alloc * sizeof(struct page *));
 		ret = -ENOMEM;
-		goto done;
+/* OPPO 2013-05-08 huanggd Modify begin for NULL pointer*/
+		//goto done;
+		kgsl_sg_free(memdesc->sg, sglen_alloc);
+		memset(memdesc, 0, sizeof(*memdesc));
+		return ret;
+/* OPPO 2013-05-08 huanggd Modify end*/		
 	}
 
 	kmemleak_not_leak(memdesc->sg);

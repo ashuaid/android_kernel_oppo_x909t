@@ -389,6 +389,8 @@ static struct task_struct *select_bad_process(unsigned int *ppoints,
  *
  * Call with tasklist_lock read-locked.
  */
+ /* OPPO 2013-05-24 huanggd Modify for reduce printk rate*/		
+#if 0
 static void dump_tasks(const struct mem_cgroup *memcg, const nodemask_t *nodemask)
 {
 	struct task_struct *p;
@@ -417,29 +419,31 @@ static void dump_tasks(const struct mem_cgroup *memcg, const nodemask_t *nodemas
 		task_unlock(task);
 	}
 }
+#endif	
+/* OPPO 2013-05-24 huanggd Modify end*/
 
 static void dump_header(struct task_struct *p, gfp_t gfp_mask, int order,
 			struct mem_cgroup *memcg, const nodemask_t *nodemask)
 {
-
-/* OPPO 2013-05-24 huanggd Modify for reduce printk rate*/			
-	if (!printk_ratelimit()) {
-		return;
-	}
-/* OPPO 2013-05-24 huanggd Modify end*/	
-
 	task_lock(current);
-	pr_warning("%s invoked oom-killer: gfp_mask=0x%x, order=%d, "
-		"oom_adj=%d, oom_score_adj=%d\n",
-		current->comm, gfp_mask, order, current->signal->oom_adj,
-		current->signal->oom_score_adj);
+/* OPPO 2013-05-24 huanggd Modify for reduce printk rate*/			
+	if (printk_ratelimit())	
+		pr_warning("%s invoked oom-killer: gfp_mask=0x%x, order=%d, "
+			"oom_adj=%d, oom_score_adj=%d\n",
+			current->comm, gfp_mask, order, current->signal->oom_adj,
+			current->signal->oom_score_adj);
+/* OPPO 2013-05-24 huanggd Modify end*/			
 	cpuset_print_task_mems_allowed(current);
 	task_unlock(current);
+/* OPPO 2013-05-24 huanggd Modify for reduce printk rate*/		
+#if 0
 	dump_stack();
 	mem_cgroup_print_oom_info(memcg, p);
 	show_mem(SHOW_MEM_FILTER_NODES);
 	if (sysctl_oom_dump_tasks)
 		dump_tasks(memcg, nodemask);
+#endif	
+/* OPPO 2013-05-24 huanggd Modify end*/	
 }
 
 #define K(x) ((x) << (PAGE_SHIFT-10))
