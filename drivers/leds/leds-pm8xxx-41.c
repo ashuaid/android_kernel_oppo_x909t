@@ -550,7 +550,7 @@ static int __devinit init_wled(struct pm8xxx_led_data *led)
 	num_wled_strings = led->wled_cfg->num_strings;
 
 	/* program over voltage protection threshold */
-	if (led->wled_cfg->ovp_val > WLED_OVP_37V) {
+	if (led->wled_cfg->ovp_val > WLED_OVP_27V) {
 		dev_err(led->dev->parent, "Invalid ovp value");
 		return -EINVAL;
 	}

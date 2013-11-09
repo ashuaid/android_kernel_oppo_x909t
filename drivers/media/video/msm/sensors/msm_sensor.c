@@ -1871,6 +1871,7 @@ int32_t msm_sensor_power(struct v4l2_subdev *sd, int on)
 					__func__,
 					s_ctrl->sensordata->sensor_name);
 				s_ctrl->sensor_state = MSM_SENSOR_POWER_DOWN;
+				goto power_up_failed;
 			}
 			s_ctrl->sensor_state = MSM_SENSOR_POWER_UP;
 		}
@@ -1884,6 +1885,7 @@ int32_t msm_sensor_power(struct v4l2_subdev *sd, int on)
 		rc = s_ctrl->func_tbl->sensor_power_down(s_ctrl);
 		s_ctrl->sensor_state = MSM_SENSOR_POWER_DOWN;
 	}
+power_up_failed:
 	mutex_unlock(s_ctrl->msm_sensor_mutex);
 	return rc;
 }

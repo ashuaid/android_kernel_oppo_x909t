@@ -39,6 +39,7 @@
 #include <mach/msm_rtb.h>
 #include <linux/msm_ion.h>
 #include "clock.h"
+#include "pm.h"
 #include "devices.h"
 #include "footswitch.h"
 #include "msm_watchdog.h"
@@ -123,6 +124,19 @@ struct platform_device msm8064_pc_cntr = {
 	.id		= -1,
 	.num_resources	= ARRAY_SIZE(msm8064_resources_pccntr),
 	.resource	= msm8064_resources_pccntr,
+};
+
+static struct msm_pm_sleep_status_data msm_pm_slp_sts_data = {
+	.base_addr = MSM_ACC0_BASE + 0x08,
+	.cpu_offset = MSM_ACC1_BASE - MSM_ACC0_BASE,
+	.mask = 1UL << 13,
+};
+struct platform_device msm8064_cpu_slp_status = {
+	.name		= "cpu_slp_status",
+	.id		= -1,
+	.dev = {
+		.platform_data = &msm_pm_slp_sts_data,
+	},
 };
 
 static struct msm_watchdog_pdata msm_watchdog_pdata = {
@@ -560,6 +574,50 @@ struct platform_device apq8064_device_uart_gsbi5 = {
 	.resource	= resources_uart_gsbi5,
 };
 /* OPPO 2013-03-18 zhenwx  Add end */
+/* GSBI 6 used into UARTDM Mode */
+static struct resource msm_uart_dm6_resources[] = {
+	{
+		.start  = MSM_UART6DM_PHYS,
+		.end    = MSM_UART6DM_PHYS + PAGE_SIZE - 1,
+		.name   = "uartdm_resource",
+		.flags  = IORESOURCE_MEM,
+	},
+	{
+		.start  = GSBI6_UARTDM_IRQ,
+		.end    = GSBI6_UARTDM_IRQ,
+		.flags  = IORESOURCE_IRQ,
+	},
+	{
+		.start  = MSM_GSBI6_PHYS,
+		.end    = MSM_GSBI6_PHYS + 4 - 1,
+		.name   = "gsbi_resource",
+		.flags  = IORESOURCE_MEM,
+	},
+	{
+		.start  = DMOV_MPQ8064_HSUART_GSBI6_TX_CHAN,
+		.end    = DMOV_MPQ8064_HSUART_GSBI6_RX_CHAN,
+		.name   = "uartdm_channels",
+		.flags  = IORESOURCE_DMA,
+	},
+	{
+		.start  = DMOV_MPQ8064_HSUART_GSBI6_TX_CRCI,
+		.end    = DMOV_MPQ8064_HSUART_GSBI6_RX_CRCI,
+		.name   = "uartdm_crci",
+		.flags  = IORESOURCE_DMA,
+	},
+};
+static u64 msm_uart_dm6_dma_mask = DMA_BIT_MASK(32);
+struct platform_device mpq8064_device_uartdm_gsbi6 = {
+	.name   = "msm_serial_hs",
+	.id     = 0,
+	.num_resources  = ARRAY_SIZE(msm_uart_dm6_resources),
+	.resource       = msm_uart_dm6_resources,
+	.dev    = {
+		.dma_mask		= &msm_uart_dm6_dma_mask,
+		.coherent_dma_mask	= DMA_BIT_MASK(32),
+	},
+};
+
 static struct resource resources_uart_gsbi7[] = {
 	{
 		.start	= GSBI7_UARTDM_IRQ,
@@ -1438,26 +1496,26 @@ static struct msm_bus_vectors vidc_venc_1080p_turbo_vectors[] = {
 	{
 		.src = MSM_BUS_MASTER_VIDEO_ENC,
 		.dst = MSM_BUS_SLAVE_EBI_CH0,
-		.ab  = 222298112,
+		.ab  = 372244480,
 		.ib  = 3522000000U,
 	},
 	{
 		.src = MSM_BUS_MASTER_VIDEO_DEC,
 		.dst = MSM_BUS_SLAVE_EBI_CH0,
-		.ab  = 330301440,
+		.ab  = 501219328,
 		.ib  = 3522000000U,
 	},
 	{
 		.src = MSM_BUS_MASTER_AMPSS_M0,
 		.dst = MSM_BUS_SLAVE_EBI_CH0,
 		.ab  = 2500000,
-		.ib  = 700000000,
+		.ib  = 5000000,
 	},
 	{
 		.src = MSM_BUS_MASTER_AMPSS_M0,
 		.dst = MSM_BUS_SLAVE_EBI_CH0,
 		.ab  = 2500000,
-		.ib  = 10000000,
+		.ib  = 5000000,
 	},
 };
 static struct msm_bus_vectors vidc_vdec_1080p_turbo_vectors[] = {
@@ -2489,8 +2547,8 @@ static struct msm_rpm_log_platform_data msm_rpm_log_pdata = {
 		[MSM_RPM_LOG_PAGE_BUFFER]  = 0x000000A0,
 	},
 	.phys_size = SZ_8K,
-	.log_len = 4096,		  /* log's buffer length in bytes */
-	.log_len_mask = (4096 >> 2) - 1,  /* length mask in units of u32 */
+	.log_len = 6144,		  /* log's buffer length in bytes */
+	.log_len_mask = (6144 >> 2) - 1,  /* length mask in units of u32 */
 };
 
 struct platform_device apq8064_rpm_log_device = {

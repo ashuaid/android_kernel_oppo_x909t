@@ -334,5 +334,5 @@ int interpolate_pc(struct pc_temp_ocv_lut *pc_temp_ocv,
 
 	pr_debug("%d ocv wasn't found for temp %d in the LUT returning 100%%\n",
 							ocv, batt_temp_degc);
-	return 1;
+	return 100;
 }
