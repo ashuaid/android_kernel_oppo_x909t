@@ -96,6 +96,7 @@ int load_565rle_image(char *filename, bool bf_supported)
 		       __func__, __LINE__, info->node);
 		goto err_logo_free_data;
 	}
+	if (info->screen_base) {
 	bits = (unsigned short *)(info->screen_base);
 #ifndef CONFIG_VENDOR_EDIT
 	while (count > 3) {
@@ -137,6 +138,7 @@ int load_565rle_image(char *filename, bool bf_supported)
 		count -= 4;
 	}
 #endif
+	}
 
 err_logo_free_data:
 	kfree(data);
