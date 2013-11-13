@@ -952,12 +952,12 @@ static void *def_tabla_mbhc_cal(void)
 	S(mic_current, TABLA_PID_MIC_5_UA);
 	S(hph_current, TABLA_PID_MIC_5_UA);
 	S(t_mic_pid, 100);
-	S(t_ins_complete, 200);
+	S(t_ins_complete, 250);
 	S(t_ins_retry, 200);
 #undef S
 #define S(X, Y) ((TABLA_MBHC_CAL_PLUG_TYPE_PTR(tabla_cal)->X) = (Y))
-	S(v_no_mic, 100);
-	S(v_hs_max, 2000);
+	S(v_no_mic, 30);
+	S(v_hs_max, 2400);
 #undef S
 #define S(X, Y) ((TABLA_MBHC_CAL_BTN_DET_PTR(tabla_cal)->X) = (Y))
 	S(c[0], 62);
@@ -1370,8 +1370,7 @@ static int msm_audrx_init(struct snd_soc_pcm_runtime *rtd)
 	apq8064_hs_detect_use_gpio = 1;
 	#endif
 	/*OPPO 2012-07-27 zhzhyon Add end*/
-	if (apq8064_hs_detect_use_gpio == 1) 
-	{
+	if (apq8064_hs_detect_use_gpio == 1) {
 		pr_debug("%s: Using MBHC mechanical switch\n", __func__);
 		mbhc_cfg.gpio = JACK_DETECT_GPIO;
 		mbhc_cfg.gpio_irq = gpio_to_irq(JACK_DETECT_GPIO);

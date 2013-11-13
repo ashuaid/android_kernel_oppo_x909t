@@ -21,6 +21,7 @@
 #include <linux/pm_runtime.h>
 #include <linux/platform_device.h>
 #include <linux/smux.h>
+#include <linux/signal.h>
 #include <asm/current.h>
 #ifdef CONFIG_DIAG_OVER_USB
 #include <mach/usbdiag.h>
@@ -227,8 +228,12 @@ static int diag_hsic_suspend(void *ctxt)
 	if (diag_hsic[index].in_busy_hsic_write)
 		return -EBUSY;
 
-	/* Don't allow suspend if in MEMORY_DEVICE_MODE */
-	if (driver->logging_mode == MEMORY_DEVICE_MODE)
+	/*
+	 * Don't allow suspend if in MEMORY_DEVICE_MODE and if there
+	 * has been hsic data requested
+	 */
+	if (driver->logging_mode == MEMORY_DEVICE_MODE &&
+				diag_hsic[index].hsic_ch)
 		return -EBUSY;
 
 	diag_hsic[index].hsic_suspend = 1;
@@ -288,7 +293,7 @@ void diag_hsic_close(int ch_id)
 }
 
 /* diagfwd_cancel_hsic is called to cancel outstanding read/writes */
-int diagfwd_cancel_hsic(void)
+int diagfwd_cancel_hsic(int reopen)
 {
 	int err, i;
 
@@ -302,17 +307,24 @@ int diagfwd_cancel_hsic(void)
 				diag_hsic[i].hsic_ch = 0;
 				diag_hsic[i].hsic_device_opened = 0;
 				diag_bridge_close(i);
-				hsic_diag_bridge_ops[i].ctxt = (void *)(i);
-				err = diag_bridge_open(i,
-						   &hsic_diag_bridge_ops[i]);
-				if (err) {
-					pr_err("diag: HSIC %d channel open error: %d\n",
-						 i, err);
+				if (reopen) {
+					hsic_diag_bridge_ops[i].ctxt =
+								(void *)(i);
+					err = diag_bridge_open(i,
+						&hsic_diag_bridge_ops[i]);
+					if (err) {
+						pr_err("diag: HSIC %d channel open error: %d\n",
+							 i, err);
+					} else {
+						pr_debug("diag: opened HSIC channel: %d\n",
+							i);
+						diag_hsic[i].
+							hsic_device_opened = 1;
+						diag_hsic[i].hsic_ch = 1;
+					}
+					diag_hsic[i].hsic_data_requested = 1;
 				} else {
-					pr_debug("diag: opened HSIC channel: %d\n",
-						i);
-					diag_hsic[i].hsic_device_opened = 1;
-					diag_hsic[i].hsic_ch = 1;
+					diag_hsic[i].hsic_data_requested = 0;
 				}
 			}
 		}
@@ -400,6 +412,8 @@ void diag_read_usb_hsic_work_fn(struct work_struct *work)
 static int diag_hsic_probe(struct platform_device *pdev)
 {
 	int err = 0;
+	int stat;
+	struct siginfo info;
 
 	/* pdev->Id will indicate which HSIC is working. 0 stands for HSIC
 	 *  or CP1 1 indicates HS-USB or CP2
@@ -428,15 +442,20 @@ static int diag_hsic_probe(struct platform_device *pdev)
 		diagmem_hsic_init(pdev->id);
 		INIT_WORK(&(diag_hsic[pdev->id].diag_read_hsic_work),
 			    diag_read_hsic_work_fn);
+		diag_hsic[pdev->id].hsic_data_requested =
+			(driver->logging_mode == MEMORY_DEVICE_MODE) ? 0 : 1;
 		diag_hsic[pdev->id].hsic_inited = 1;
 	}
 	/*
 	 * The probe function was called after the usb was connected
-	 * on the legacy channel OR ODL is turned on. Communication over usb
-	 * mdm and HSIC needs to be turned on.
+	 * on the legacy channel OR ODL is turned on and hsic data is
+	 * requested. Communication over usb mdm and HSIC needs to be
+	 * turned on.
 	 */
-	if (diag_bridge[pdev->id].usb_connected || (driver->logging_mode ==
-						   MEMORY_DEVICE_MODE)) {
+	if ((diag_bridge[pdev->id].usb_connected &&
+		(driver->logging_mode != MEMORY_DEVICE_MODE)) ||
+		((driver->logging_mode == MEMORY_DEVICE_MODE) &&
+		diag_hsic[pdev->id].hsic_data_requested)) {
 		if (diag_hsic[pdev->id].hsic_device_opened) {
 			/* should not happen. close it before re-opening */
 			pr_warn("diag: HSIC channel already opened in probe\n");
@@ -469,6 +488,24 @@ static int diag_hsic_probe(struct platform_device *pdev)
 	}
 	/* The HSIC (diag_bridge) platform device driver is enabled */
 	diag_hsic[pdev->id].hsic_device_enabled = 1;
+
+	/* Send signal to userspace to send masks to MDM*/
+	if (driver->logging_mode == MEMORY_DEVICE_MODE) {
+			memset(&info, 0, sizeof(struct siginfo));
+			info.si_code = SI_QUEUE;
+			info.si_errno = 0;
+			info.si_signo = SIGRTMIN;
+			pr_info("diag: sending signal to userspace to send masks\n");
+			if (mdlog_process) {
+				stat = send_sig_info(SIGRTMIN, &info,
+							mdlog_process);
+				if (stat)
+					pr_err("diag:Err sending mask signal,stat:%d\n",
+							stat);
+			}
+	}
+	/*-------------------------------------------------*/
+
 	mutex_unlock(&diag_bridge[pdev->id].bridge_mutex);
 	return err;
 }
