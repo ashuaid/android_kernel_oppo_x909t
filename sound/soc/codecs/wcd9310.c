@@ -34,8 +34,8 @@
 #include <linux/kernel.h>
 #include <linux/gpio.h>
 #include <linux/irq.h>
-#include <linux/wakelock.h>
 #include <linux/suspend.h>
+#include <linux/wakelock.h>
 /*OPPO 2012-07-27 zhzhyon Add begin for headset detect */
 #ifdef CONFIG_VENDOR_EDIT
 #include <linux/switch.h>
@@ -2535,9 +2535,6 @@ static void tabla_codec_pause_hs_polling(struct snd_soc_codec *codec)
 		return;
 	}
 
-	snd_soc_update_bits(codec, tabla->mbhc_bias_regs.ctl_reg, 0x01, 0x01);
-	msleep(20);
-	snd_soc_update_bits(codec, tabla->mbhc_bias_regs.ctl_reg, 0x01, 0x00);
 	snd_soc_update_bits(codec, TABLA_A_CDC_MBHC_CLK_CTL, 0x8, 0x8);
 	pr_debug("%s: leave\n", __func__);
 }
@@ -7369,7 +7366,7 @@ tabla_codec_get_plug_type(struct snd_soc_codec *codec, bool highhph)
 	#endif
 	/*OPPO 2012-11-28 zhzhyon Add end*/
 	
-	for (i = 0; (plug_type[0] != PLUG_TYPE_GND_MIC_SWAP && !inval) &&
+	for (i = 0; 
 		     i < num_det; i++) {
 		/*
 		 * If we are here, means none of the all
@@ -8244,7 +8241,6 @@ static void tabla_hs_gpio_handler(struct snd_soc_codec *codec,bool irq_detect)
 {
 	bool insert;
 	struct tabla_priv *tabla = snd_soc_codec_get_drvdata(codec);
-	struct wcd9xxx *core = dev_get_drvdata(codec->dev->parent);
 	bool is_removed = false;
 
 	pr_debug("%s: enter\n", __func__);
@@ -8265,7 +8261,6 @@ static void tabla_hs_gpio_handler(struct snd_soc_codec *codec,bool irq_detect)
 	#endif
 	/*OPPO 2012-12-10 zhzhyon Modify end*/
 
-	wcd9xxx_nested_irq_lock(core);
 	TABLA_ACQUIRE_LOCK(tabla->codec_resource_lock);
 
 
@@ -8297,8 +8292,7 @@ static void tabla_hs_gpio_handler(struct snd_soc_codec *codec,bool irq_detect)
 	if (tabla_cancel_btn_work(tabla))
 		pr_debug("%s: button press is canceled\n", __func__);
 
-	insert = (gpio_get_value_cansleep(tabla->mbhc_cfg.gpio) ==
-		  tabla->mbhc_cfg.gpio_level_insert);
+	
 	if ((tabla->current_plug == PLUG_TYPE_NONE) && insert) {
 		tabla->lpi_enabled = false;
 		wmb();
@@ -8327,7 +8321,8 @@ static void tabla_hs_gpio_handler(struct snd_soc_codec *codec,bool irq_detect)
 		/*OPPO 2012-12-28 zhzhyon Add end*/
 
 
-		if (tabla->current_plug == PLUG_TYPE_HEADPHONE) {
+		if (tabla->current_plug == PLUG_TYPE_HEADPHONE) 
+		{
 			tabla_codec_report_plug(codec, 0, SND_JACK_HEADPHONE);
 			is_removed = true;
 		} else if (tabla->current_plug == PLUG_TYPE_GND_MIC_SWAP) {
@@ -8375,7 +8370,6 @@ static void tabla_hs_gpio_handler(struct snd_soc_codec *codec,bool irq_detect)
 
 	tabla->in_gpio_handler = false;
 	TABLA_RELEASE_LOCK(tabla->codec_resource_lock);
-	wcd9xxx_nested_irq_unlock(core);
 	pr_debug("%s: leave\n", __func__);
 }
 
@@ -8570,7 +8564,8 @@ static int tabla_mbhc_init_and_calibrate(struct tabla_priv *tabla)
 
 			#endif
 			/*OPPO 2012-11-28 zhzhyon Modify end*/
-			if (!IS_ERR_VALUE(ret)) {
+			if (!IS_ERR_VALUE(ret)) 
+			{
 				ret = enable_irq_wake(tabla->mbhc_cfg.gpio_irq);
 				/* Bootup time detection */
 				tabla_hs_gpio_handler(codec,0);
