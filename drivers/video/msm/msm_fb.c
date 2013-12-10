@@ -2452,12 +2452,9 @@ static int msm_fb_pan_display_sub(struct fb_var_screeninfo *var,
 		schedule_delayed_work(&mfd->backlight_worker,
 					backlight_duration);
 
-/* OPPO 2012-11-30 huyu modify for boot LOGO bluescreen*/
-#ifdef CONFIG_VENDOR_EDIT		
 	if (info->node == 0 && (mfd->cont_splash_done)) /* primary */
 		mdp_free_splash_buffer(mfd);
-#endif
-/* OPPO 2012-11-30 huyu modify for boot LOGO bluescreen*/
+
 	++mfd->panel_info.frame_count;
 	return 0;
 }
@@ -3666,12 +3663,9 @@ static int msmfb_overlay_play(struct fb_info *info, unsigned long *argp)
 
 	ret = mdp4_overlay_play(info, &req);
 
-/* OPPO 2012-11-30 huyu modify for boot LOGO bluescreen*/
-#ifdef CONFIG_VENDOR_EDIT	
 	if (info->node == 0 && (mfd->cont_splash_done)) /* primary */
 		mdp_free_splash_buffer(mfd);
-#endif
-/* OPPO 2012-11-30 huyu modify for boot LOGO bluescreen*/
+
 	return ret;
 }
 
