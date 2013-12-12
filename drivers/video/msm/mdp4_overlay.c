@@ -3591,7 +3591,10 @@ int mdp4_overlay_set(struct fb_info *info, struct mdp_overlay *req)
 
 	if (ret < 0) {
 		mutex_unlock(&mfd->dma->ov_mutex);
-		pr_err("%s: mdp4_overlay_req2pipe, ret=%d\n", __func__, ret);
+/* OPPO 2013-08-06 huanggd Modify for reduce printk rate*/		
+		if (printk_ratelimit())		
+			pr_err("%s: mdp4_overlay_req2pipe, ret=%d\n", __func__, ret);
+/* OPPO 2013-08-06 huanggd Modify end*/				
 		return ret;
 	}
 

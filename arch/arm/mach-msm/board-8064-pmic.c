@@ -291,7 +291,6 @@ static struct led_info pm8921_led_info[] = {
 /* OPPO 2013-04-10 wangjw change node from "led:red" to "button-backlight" */
 		.name			= "button-backlight",
 /* OPPO 2013-04-10 wangjw change end */
-		.name			= "led:red",
 		.default_trigger	= "ac-online",
 	},
 };
