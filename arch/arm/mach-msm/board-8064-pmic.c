@@ -348,7 +348,10 @@ static struct pm8xxx_led_config pm8921_led_configs[] = {
 		.max_current = PM8921_LC_LED_MAX_CURRENT,
 		.pwm_channel = 4,
 		.pwm_period_us = PM8XXX_LED_PWM_PERIOD,
+/* OPPO 2012-11-15 wangjw Delete begin for button back light */
+#if 0
 		.pwm_duty_cycles = &pm8921_led0_pwm_duty_cycles,
+#endif
 	},
 };
 
