@@ -291,7 +291,11 @@ static struct led_info pm8921_led_info[] = {
 /* OPPO 2013-04-10 wangjw change node from "led:red" to "button-backlight" */
 		.name			= "button-backlight",
 /* OPPO 2013-04-10 wangjw change end */
-		.default_trigger	= "ac-online",
+		.default_trigger	= "battery-charging",
+	},
+	[1] = {
+		.name			= "led:green",
+		.default_trigger	= "battery-full",
 	},
 };
 
@@ -337,6 +341,14 @@ static struct pm8xxx_led_config pm8921_led_configs[] = {
 		.pwm_duty_cycles = &pm8921_led0_pwm_duty_cycles,
 #endif
 /* OPPO 2012-11-15 wangjw Delete end */
+	},
+	[1] = {
+		.id = PM8XXX_ID_LED_1,
+		.mode = PM8XXX_LED_MODE_PWM1,
+		.max_current = PM8921_LC_LED_MAX_CURRENT,
+		.pwm_channel = 4,
+		.pwm_period_us = PM8XXX_LED_PWM_PERIOD,
+		.pwm_duty_cycles = &pm8921_led0_pwm_duty_cycles,
 	},
 };
 
